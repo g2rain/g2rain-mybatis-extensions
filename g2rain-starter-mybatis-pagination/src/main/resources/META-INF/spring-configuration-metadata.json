@@ -1,0 +1,18 @@
+{
+    "groups": [
+        {
+            "name": "g2rain.mybatis.pagination",
+            "type": "com.g2rain.mybatis.pagination.autoconfigure.PaginationProperties",
+            "sourceType": "com.g2rain.mybatis.pagination.autoconfigure.PaginationProperties",
+            "description": "MyBatis 分页插件配置"
+        }
+    ],
+    "properties": [
+        {
+            "name": "g2rain.mybatis.pagination.order",
+            "type": "java.lang.Integer",
+            "description": "分页处理器在插件链中的执行顺序，数值越小越先执行",
+            "defaultValue": 20000
+        }
+    ]
+}

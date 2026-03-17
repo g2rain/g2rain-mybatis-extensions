@@ -1,0 +1,247 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.g2rain</groupId>
+    <artifactId>g2rain-mybatis-extensions</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <name>G2rain Mybatis Extensions</name>
+
+    <description>
+        MyBatis extensions parent: includes extension core, pagination plugin and Spring Boot pagination Starter,
+        providing SQL parse caching, plugin chain, pagination and count capabilities.
+    </description>
+
+    <!-- Project URL: Maven Central 要求必须配置 -->
+    <url>https://github.com/g2rain/g2rain-mybatis-extensions</url>
+
+    <scm>
+        <url>https://github.com/g2rain/g2rain-mybatis-extensions</url>
+        <connection>scm:git:https://github.com/g2rain/g2rain-mybatis-extensions.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/g2rain/g2rain-mybatis-extensions.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>G2rain</name>
+        <url>http://www.g2rain.com/</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <name>Jagger</name>
+            <email>g2rain_developer@163.com</email>
+            <organization>G2rain</organization>
+            <organizationUrl>http://www.g2rain.com/</organizationUrl>
+        </developer>
+        <developer>
+            <id>alpha</id>
+            <name>Alpha</name>
+            <organization>G2rain</organization>
+            <organizationUrl>http://www.g2rain.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <modules>
+        <module>g2rain-mybatis-extension</module>
+        <module>g2rain-mybatis-pagination</module>
+        <module>g2rain-starter-mybatis-pagination</module>
+    </modules>
+
+    <distributionManagement>
+        <!-- Snapshot 仓库配置 -->
+        <snapshotRepository>
+            <id>central-portal-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+        <!-- Release 仓库由 central-publishing-maven-plugin 自动处理，无需配置 -->
+    </distributionManagement>
+
+    <properties>
+        <!-- CI-Friendly Versions: bump once here or override via -Drevision=... (see .mvn/maven.config) -->
+        <revision>1.0.1</revision>
+        <lombok.version>1.18.42</lombok.version>
+        <jsqlparser.version>5.3</jsqlparser.version>
+        <mybatis.version>3.5.19</mybatis.version>
+        <caffeine.version>3.2.3</caffeine.version>
+        <kryo.version>5.6.2</kryo.version>
+        <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
+        <maven.enforcer.plugin.version>3.6.1</maven.enforcer.plugin.version>
+        <maven.checkstyle.plugin.version>3.6.0</maven.checkstyle.plugin.version>
+        <maven.pmd.plugin.version>3.27.0</maven.pmd.plugin.version>
+        <spotbugs.maven.plugin.version>4.9.6.0</spotbugs.maven.plugin.version>
+        <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
+        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
+        <flatten.maven.plugin.version>1.7.3</flatten.maven.plugin.version>
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <central.publishing.maven.plugin.version>0.10.0</central.publishing.maven.plugin.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 本工程模块，子模块引用时可不写 version -->
+            <dependency>
+                <groupId>com.g2rain</groupId>
+                <artifactId>g2rain-mybatis-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.g2rain</groupId>
+                <artifactId>g2rain-mybatis-pagination</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- 第三方依赖版本统一，子模块用 ${jsqlparser.version} 等或省略 version 由 BOM 提供 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>${jsqlparser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven.enforcer.plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>enforce-java</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireJavaVersion>
+                                        <version>[25,)</version>
+                                    </requireJavaVersion>
+                                    <requireUpperBoundDeps/>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven.javadoc.plugin.version}</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <doclint>none</doclint>
+                        <additionalJOption>-Xdoclint:none</additionalJOption>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>${flatten.maven.plugin.version}</version>
+                    <configuration>
+                        <updatePomFile>true</updatePomFile>
+                        <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- 发布 profile：签名 + Sonatype Central Portal -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- GPG 签名插件：生成已签名的 jar / pom -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--batch</arg>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                    <passphrase>${env.MAVEN_GPG_PASSPHRASE}</passphrase>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central Publishing Maven Plugin：使用新的 Central Publisher Portal -->
+                    <!-- 参考文档：https://central.sonatype.org/publish/publish-portal-maven/ -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.maven.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <!-- 自动发布，无需手动干预（适合 CI 构建） -->
+                            <autoPublish>true</autoPublish>
+                            <!-- 等待直到发布完成 -->
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
