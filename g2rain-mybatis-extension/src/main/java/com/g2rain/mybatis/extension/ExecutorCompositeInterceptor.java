@@ -11,9 +11,6 @@ import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * {@link Executor} 复合拦截器，基于 {@link PluginProcessor} 插件链扩展 MyBatis 执行逻辑。
  * <p>

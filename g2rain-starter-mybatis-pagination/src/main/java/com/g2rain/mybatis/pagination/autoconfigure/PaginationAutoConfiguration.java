@@ -1,10 +1,10 @@
 package com.g2rain.mybatis.pagination.autoconfigure;
 
 import com.g2rain.mybatis.extension.ExecutorCompositeInterceptor;
+import com.g2rain.mybatis.extension.StatementHandlerCompositeInterceptor;
+import com.g2rain.mybatis.pagination.PaginationPrepareProcessor;
 import com.g2rain.mybatis.pagination.PaginationQueryProcessor;
-import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
 import org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -48,6 +48,22 @@ public class PaginationAutoConfiguration {
     public ExecutorCompositeInterceptor paginationExecutorCompositeInterceptor(PaginationQueryProcessor paginationQueryProcessor) {
         ExecutorCompositeInterceptor interceptor = new ExecutorCompositeInterceptor();
         interceptor.addPluginProcessor(paginationQueryProcessor);
+        return interceptor;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PaginationPrepareProcessor.class)
+    public PaginationPrepareProcessor paginationPrepareProcessor(PaginationProperties properties,
+                                                                PaginationQueryProcessor paginationQueryProcessor) {
+        return new PaginationPrepareProcessor(properties.getOrder(), paginationQueryProcessor);
+    }
+
+    @Bean(name = "paginationStatementHandlerCompositeInterceptor")
+    @ConditionalOnMissingBean(StatementHandlerCompositeInterceptor.class)
+    public StatementHandlerCompositeInterceptor paginationStatementHandlerCompositeInterceptor(
+            PaginationPrepareProcessor paginationPrepareProcessor) {
+        StatementHandlerCompositeInterceptor interceptor = new StatementHandlerCompositeInterceptor();
+        interceptor.addPluginProcessor(paginationPrepareProcessor);
         return interceptor;
     }
 }

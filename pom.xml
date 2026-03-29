@@ -69,7 +69,7 @@
 
     <properties>
         <!-- CI-Friendly Versions: bump once here or override via -Drevision=... (see .mvn/maven.config) -->
-        <revision>1.0.1</revision>
+        <revision>1.0.2</revision>
         <lombok.version>1.18.42</lombok.version>
         <jsqlparser.version>5.3</jsqlparser.version>
         <mybatis.version>3.5.19</mybatis.version>
@@ -131,6 +131,12 @@
                 <groupId>com.esotericsoftware</groupId>
                 <artifactId>kryo</artifactId>
                 <version>${kryo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.10.2</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
