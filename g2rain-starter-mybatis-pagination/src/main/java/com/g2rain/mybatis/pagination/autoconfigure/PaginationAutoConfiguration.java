@@ -17,9 +17,10 @@ import org.springframework.context.annotation.Bean;
 /**
  * 分页 Starter 自动配置。
  * <p>
- * 在存在 MyBatis {@link SqlSessionFactory} 且启用分页时，注册 {@link PaginationQueryProcessor}
- * 与 {@link ExecutorCompositeInterceptor}，并通过 {@link ConfigurationCustomizer}
- * 将拦截器加入 MyBatis {@link Configuration}，实现基于
+ * 在存在 MyBatis {@link SqlSessionFactory} 时，注册 {@link PaginationQueryProcessor}、
+ * {@link PaginationPrepareProcessor} 与 {@link ExecutorCompositeInterceptor}、
+ * {@link StatementHandlerCompositeInterceptor}；由 MyBatis Spring Boot 将拦截器装配进
+ * {@link org.apache.ibatis.session.Configuration}，实现基于
  * {@link com.g2rain.mybatis.pagination.PageContext} 的自动分页与 count 查询。
  * </p>
  * <p>
