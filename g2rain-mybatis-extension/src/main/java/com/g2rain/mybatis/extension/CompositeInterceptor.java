@@ -30,7 +30,7 @@ public abstract class CompositeInterceptor implements Interceptor {
     private final List<PluginProcessor> pluginProcessors = new ArrayList<>();
 
     /**
-     * 拦截 Executor 方法的拦截器链。
+     * 复合拦截器链执行入口。
      * <p>
      * 创建 {@link InvocationContext}，识别拦截点类型，
      * 并依次执行匹配的插件处理器，最后调用对应 {@link InterceptPoint#handle(InvocationContext)}。

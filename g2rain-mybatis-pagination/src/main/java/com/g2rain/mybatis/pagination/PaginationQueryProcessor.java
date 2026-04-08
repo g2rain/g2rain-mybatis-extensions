@@ -28,20 +28,19 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * MyBatis 分页拦截器内部实现，用于自动拦截查询，执行分页逻辑和总数统计。
  * <p>
- * 该类在查询执行前，通过 {@link PageContext} 判断是否需要分页；如果需要分页，
- * 会构造 count SQL 并执行统计查询，然后根据 {@link DatabaseType} 生成对应数据库的分页 SQL，
- * 并将参数注入到 {@link BoundSql}。
+ * 该类在查询执行前，通过 {@link PageContext} 判断是否需要分页；若开启 count，
+ * 在 {@link #shouldIntercept(InvocationContext)} 中构造并执行 count SQL。
+ * 物理分页 SQL 的生成与参数注入在 {@link org.apache.ibatis.executor.statement.StatementHandler#prepare}
+ * 阶段由 {@link PaginationPrepareProcessor} 完成，以避免 Executor 查询再入导致重复 LIMIT。
  * </p>
  * <p>
  * 分页查询完成后，结果会被填充到 {@link PageContext} 中，同时提供排序字段合并和优化 count SQL 的功能。
@@ -49,11 +48,11 @@ import java.util.stream.Collectors;
  * <p>
  * 典型流程：
  * <ol>
- *     <li>拦截执行 {@link #shouldIntercept(InvocationContext)} 判断是否分页</li>
- *     <li>构建 count 查询语句并执行统计</li>
- *     <li>拦截 {@link #onQuery}，根据数据库类型生成分页 SQL</li>
- *     <li>注入分页参数到 ParameterMapping 和 BoundSql 的额外参数</li>
- *     <li>拦截 {@link #onResult} 填充分页结果到 PageContext</li>
+ *     <li>{@link #shouldIntercept(InvocationContext)}：分页上下文与幂等守卫；可选执行 count</li>
+ *     <li>若开启 count：构建 count SQL 并执行统计查询</li>
+ *     <li>prepare 阶段：{@link PaginationPrepareProcessor} 按方言生成分页 SQL 并注入参数</li>
+ *     <li>{@link #onQuery}：本类不改写 SQL（保留扩展点）</li>
+ *     <li>{@link #onResult}：将查询列表回填至 {@link PageContext}</li>
  * </ol>
  * </p>
  *
@@ -61,6 +60,16 @@ import java.util.stream.Collectors;
  * @since 2026/3/5
  */
 public class PaginationQueryProcessor extends QueryProcessor {
+
+    private static final System.Logger logger = System.getLogger(PaginationQueryProcessor.class.getName());
+    private static final boolean CACHE_STATS_ENABLED = Boolean.parseBoolean(
+        System.getProperty("g2rain.mybatis.pagination.cache.stats.enabled", "false")
+    );
+    private static final int CACHE_STATS_LOG_EVERY = Integer.parseInt(
+        System.getProperty("g2rain.mybatis.pagination.cache.stats.logEvery", "1000")
+    );
+    private static final AtomicLong countSqlCacheCalls = new AtomicLong();
+    private static final AtomicLong orderBySqlCacheCalls = new AtomicLong();
 
     /**
      * 拦截器顺序
@@ -71,6 +80,29 @@ public class PaginationQueryProcessor extends QueryProcessor {
      * Count 查询缓存，key 为 MappedStatement ID
      */
     protected static final Map<String, MappedStatement> countMsCache = new ConcurrentHashMap<>();
+
+    /**
+     * Count SQL 字符串缓存。
+     * <p>
+     * count SQL 的生成依赖 SQL AST 解析与改写，成本较高；即使 SqlParserDelegate 命中缓存，
+     * 仍需要反序列化出副本。这里直接缓存最终 count SQL 字符串，减少重复解析与改写成本。
+     */
+    private static final Cache<String, String> COUNT_SQL_CACHE = Caffeine.newBuilder()
+        .maximumSize(2048)
+        .expireAfterAccess(2, TimeUnit.HOURS)
+        .recordStats()
+        .build();
+
+    /**
+     * ORDER BY 合并后的 SQL 缓存。
+     * <p>
+     * 对同一条 SQL + 同一排序规则的组合，缓存合并后的 SQL，避免重复 AST 解析与重建。
+     */
+    private static final Cache<String, String> ORDER_BY_SQL_CACHE = Caffeine.newBuilder()
+        .maximumSize(2048)
+        .expireAfterAccess(2, TimeUnit.HOURS)
+        .recordStats()
+        .build();
 
     /**
      * Count 查询默认 SelectItem
@@ -94,7 +126,7 @@ public class PaginationQueryProcessor extends QueryProcessor {
     }
 
     /**
-     * 判断是否需要拦截 SQL 执行，主要用于分页和 count 查询
+     * 判断当前查询是否进入分页插件链；在此执行 count（若开启）并配合 {@link PaginationGuards} 做幂等。
      *
      * @param invocationContext MyBatis 执行上下文
      * @return true 表示继续执行分页逻辑，false 表示跳过
@@ -105,7 +137,7 @@ public class PaginationQueryProcessor extends QueryProcessor {
     }
 
     /**
-     * 执行分页查询 SQL，注入分页参数
+     * 查询前扩展点；分页 SQL 改写已在 {@link PaginationPrepareProcessor}（prepare 阶段）完成。
      *
      * @param executor      Executor
      * @param ms            MappedStatement
@@ -231,7 +263,7 @@ public class PaginationQueryProcessor extends QueryProcessor {
      * @return count 查询 MappedStatement
      */
     protected MappedStatement buildAutoCountMappedStatement(MappedStatement ms) {
-        final String countId = String.format("%s_COUNT", ms.getId());
+        final String countId = ms.getId() + PaginationConstants.COUNT_MAPPED_STATEMENT_SUFFIX;
         final Configuration configuration = ms.getConfiguration();
         return countMsCache.computeIfAbsent(countId, key -> {
             ResultMap resultMap = new ResultMap.Builder(
@@ -321,6 +353,26 @@ public class PaginationQueryProcessor extends QueryProcessor {
         }
     }
 
+    protected String cachedAutoCountSql(String originalSql) throws SQLException {
+        if (CACHE_STATS_ENABLED) {
+            long calls = countSqlCacheCalls.incrementAndGet();
+            if (CACHE_STATS_LOG_EVERY > 0 && (calls % CACHE_STATS_LOG_EVERY == 0)) {
+                var stats = COUNT_SQL_CACHE.stats();
+                logger.log(System.Logger.Level.INFO,
+                    "COUNT_SQL_CACHE stats: requests={0}, hitRate={1}, hits={2}, misses={3}, evictions={4}",
+                    stats.requestCount(), stats.hitRate(), stats.hitCount(), stats.missCount(), stats.evictionCount());
+            }
+        }
+        String cached = COUNT_SQL_CACHE.getIfPresent(originalSql);
+        if (cached != null) {
+            return cached;
+        }
+
+        String countSql = autoCountSql(originalSql);
+        COUNT_SQL_CACHE.put(originalSql, countSql);
+        return countSql;
+    }
+
     /**
      * 当 SQL 复杂或包含参数时，使用低级方式生成 count SQL
      *
@@ -358,5 +410,79 @@ public class PaginationQueryProcessor extends QueryProcessor {
 
         parsedSelect.setOrderByElements(merged);
         return parsedSelect.toString();
+    }
+
+    protected String cachedConcatOrderBy(String originalSql, List<OrderItem> orderBy) throws SQLException {
+        if (CACHE_STATS_ENABLED) {
+            long calls = orderBySqlCacheCalls.incrementAndGet();
+            if (CACHE_STATS_LOG_EVERY > 0 && (calls % CACHE_STATS_LOG_EVERY == 0)) {
+                var stats = ORDER_BY_SQL_CACHE.stats();
+                logger.log(System.Logger.Level.INFO,
+                    "ORDER_BY_SQL_CACHE stats: requests={0}, hitRate={1}, hits={2}, misses={3}, evictions={4}",
+                    stats.requestCount(), stats.hitRate(), stats.hitCount(), stats.missCount(), stats.evictionCount());
+            }
+        }
+        String key = buildOrderByCacheKey(originalSql, orderBy);
+        String cached = ORDER_BY_SQL_CACHE.getIfPresent(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        String mergedSql = concatOrderBy(originalSql, orderBy);
+        ORDER_BY_SQL_CACHE.put(key, mergedSql);
+        return mergedSql;
+    }
+
+    private static String buildOrderByCacheKey(String originalSql, List<OrderItem> orderBy) {
+        // orderBy 已在 PageContext 做过安全过滤，这里生成稳定签名以提高命中率
+        String signature = orderBy.stream()
+            .map(i -> i.getColumn() + " " + i.getDirection())
+            .collect(Collectors.joining(","));
+        return originalSql + "||" + signature;
+    }
+
+    private static String tryFastConcatOrderBy(String originalSql, List<OrderItem> orderBy) {
+        if (originalSql == null || originalSql.isBlank()) {
+            return null;
+        }
+
+        String lower = originalSql.toLowerCase(Locale.ROOT);
+        // 只对“非常典型”的简单 SELECT 做快路径，避免误改写
+        if (!lower.startsWith("select")) {
+            return null;
+        }
+        if (lower.contains(" order by ")) {
+            return null;
+        }
+        if (lower.contains(" union ") || lower.contains(" group by ") || lower.contains(" distinct ")) {
+            return null;
+        }
+        if (lower.contains(" for update") || lower.contains(" lock in share mode")) {
+            return null;
+        }
+
+        String orderByClause = orderBy.stream()
+            .map(i -> i.getColumn() + ("desc".equalsIgnoreCase(i.getDirection()) ? " DESC" : " ASC"))
+            .collect(Collectors.joining(", "));
+        if (orderByClause.isBlank()) {
+            return null;
+        }
+
+        return originalSql + " ORDER BY " + orderByClause;
+    }
+
+    static com.github.benmanes.caffeine.cache.stats.CacheStats countSqlCacheStats() {
+        return COUNT_SQL_CACHE.stats();
+    }
+
+    static com.github.benmanes.caffeine.cache.stats.CacheStats orderBySqlCacheStats() {
+        return ORDER_BY_SQL_CACHE.stats();
+    }
+
+    static void clearInternalCachesForTest() {
+        COUNT_SQL_CACHE.invalidateAll();
+        ORDER_BY_SQL_CACHE.invalidateAll();
+        COUNT_SQL_CACHE.cleanUp();
+        ORDER_BY_SQL_CACHE.cleanUp();
     }
 }

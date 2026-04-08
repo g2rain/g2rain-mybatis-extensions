@@ -1,7 +1,6 @@
 package com.g2rain.mybatis.pagination.model;
 
 import com.g2rain.mybatis.pagination.PageContext;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

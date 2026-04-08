@@ -16,11 +16,12 @@ import java.util.Objects;
 /**
  * 封装 MyBatis {@link Invocation} 调用的上下文信息。
  * <p>
- * 该类用于 {@link ExecutorCompositeInterceptor} 中统一管理 {@link Executor} 的参数，
+ * 该类用于 {@link ExecutorCompositeInterceptor}、{@link StatementHandlerCompositeInterceptor} 中解析调用参数，
  * 并为 {@link PluginProcessor} 提供便捷访问。
  * <p>
- * 提供了对 {@link Invocation} 参数的解析，包括 {@link MappedStatement}、参数对象、
- * {@link RowBounds}、{@link ResultHandler} 和 {@link BoundSql}。
+ * 根据拦截目标类型，可解析 {@link Executor} 场景下的 {@link MappedStatement}、参数对象、
+ * {@link RowBounds}、{@link ResultHandler}、{@link BoundSql}；或 {@link StatementHandler} 场景下的
+ * {@link Connection}、事务超时等。
  * 可通过 InvocationContext#getParameter(), InvocationContext#setParameter(Object) 等方法访问或修改。
  *
  * @author alpha
@@ -76,7 +77,8 @@ public class InvocationContext {
      * 构造器。
      * <p>
      * 根据 {@link Invocation#getTarget()} 类型和参数数量，解析
-     * {@link Executor}、{@link MappedStatement}、参数对象、分页信息、结果处理器和 BoundSql。
+     * {@link Executor}、{@link MappedStatement}、参数对象、分页信息、结果处理器和 BoundSql；
+     * 或 {@link StatementHandler}、{@link Connection}、事务超时等。
      *
      * @param invocation 当前拦截的 {@link Invocation} 对象
      */

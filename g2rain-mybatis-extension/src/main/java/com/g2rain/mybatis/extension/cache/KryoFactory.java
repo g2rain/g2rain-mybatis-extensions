@@ -17,12 +17,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
-import net.sf.jsqlparser.statement.select.Limit;
-import net.sf.jsqlparser.statement.select.Offset;
-import net.sf.jsqlparser.statement.select.OrderByElement;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.statement.select.*;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 /**
@@ -173,6 +168,26 @@ public class KryoFactory {
             return kryo.readClassAndObject(input);
         } finally {
             inputPool.free(input);
+            kryoPool.free(kryo);
+        }
+    }
+
+    /**
+     * 基于 Kryo 的对象复制。
+     * <p>
+     * 与序列化/反序列化路径相比，copy 通常有更低的分配与编解码开销，
+     * 适合“缓存对象副本隔离”这类高频场景。
+     *
+     * @param obj 待复制对象
+     * @param <T> 对象类型
+     * @return 复制后的对象
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T copy(T obj) {
+        Kryo kryo = kryoPool.obtain();
+        try {
+            return (T) kryo.copy(obj);
+        } finally {
             kryoPool.free(kryo);
         }
     }
