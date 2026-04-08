@@ -50,22 +50,22 @@ public abstract class CompositeInterceptor implements Interceptor {
                 continue;
             }
 
-            if (processor.shouldIntercept(context)) {
-                activeProcessors.add(processor);
-            }
+            activeProcessors.add(processor);
         }
         try {
             // 2. 执行前置增强逻辑
             for (PluginProcessor processor : activeProcessors) {
-                processor.preHandle(context);
+                if (processor.shouldIntercept(context)) {
+                    processor.preHandle(context);
+                }
             }
 
             // 3. 执行 MyBatis 核心业务逻辑
             Object result = point.handle(context);
 
             // 4. 执行后置结果处理逻辑
-            for (PluginProcessor processor : activeProcessors) {
-                processor.postHandle(context, result);
+            for (int i = activeProcessors.size() - 1; i >= 0; i--) {
+                activeProcessors.get(i).postHandle(context, result);
             }
 
             return result;

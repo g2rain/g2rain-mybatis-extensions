@@ -8,8 +8,6 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 
-import java.util.Objects;
-
 /**
  * SQL 解析代理类，封装对 JSqlParser 的调用，并提供缓存机制以提高重复解析 SQL 的性能。
  * <p>
@@ -60,16 +58,17 @@ public class SqlParserDelegate {
      * @throws JSQLParserException 解析失败时抛出
      */
     public static Statement parse(String sql) throws JSQLParserException {
-        Statement statement = sqlStatementCache.getStatement(sql);
-        // 返回缓存副本，避免外部修改污染缓存
-        if (Objects.nonNull(statement)) {
-            return statement;
-        }
-
-        // 缓存未命中，解析并存入缓存
-        statement = parserSingleFunc.apply(sql);
-        sqlStatementCache.putStatement(sql, statement);
-        return sqlStatementCache.getStatement(sql);
+        return parserSingleFunc.apply(sql);
+//        Statement statement = sqlStatementCache.getStatement(sql);
+//        // 返回缓存副本，避免外部修改污染缓存
+//        if (Objects.nonNull(statement)) {
+//            return statement;
+//        }
+//
+//        // 缓存未命中，解析并存入缓存
+//        statement = parserSingleFunc.apply(sql);
+//        sqlStatementCache.putStatement(sql, statement);
+//        return sqlStatementCache.getStatement(sql);
     }
 
     /**
@@ -80,15 +79,16 @@ public class SqlParserDelegate {
      * @throws JSQLParserException 解析失败时抛出
      */
     public static Statements parseStatements(String sql) throws JSQLParserException {
-        Statements statements = sqlStatementCache.getStatements(sql);
-        // 返回缓存副本，避免外部修改污染缓存
-        if (Objects.nonNull(statements)) {
-            return statements;
-        }
-
-        // 缓存未命中，解析并存入缓存
-        statements = parserMultiFunc.apply(sql);
-        sqlStatementCache.putStatements(sql, statements);
-        return sqlStatementCache.getStatements(sql);
+        return parserMultiFunc.apply(sql);
+//        Statements statements = sqlStatementCache.getStatements(sql);
+//        // 返回缓存副本，避免外部修改污染缓存
+//        if (Objects.nonNull(statements)) {
+//            return statements;
+//        }
+//
+//        // 缓存未命中，解析并存入缓存
+//        statements = parserMultiFunc.apply(sql);
+//        sqlStatementCache.putStatements(sql, statements);
+//        return sqlStatementCache.getStatements(sql);
     }
 }

@@ -6,12 +6,10 @@ import com.g2rain.mybatis.extension.SqlHelper;
 import com.g2rain.mybatis.extension.SqlParserDelegate;
 import com.g2rain.mybatis.pagination.model.OrderItem;
 import com.g2rain.mybatis.pagination.model.Page;
-import com.g2rain.mybatis.pagination.PageContext;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.GroupByElement;
 import net.sf.jsqlparser.statement.select.OrderByElement;
@@ -100,48 +98,10 @@ public class PaginationQueryProcessor extends QueryProcessor {
      *
      * @param invocationContext MyBatis 执行上下文
      * @return true 表示继续执行分页逻辑，false 表示跳过
-     * @throws SQLException SQL 异常
      */
     @Override
-    public boolean shouldIntercept(InvocationContext invocationContext) throws SQLException {
-        Executor executor = invocationContext.getExecutor();
-        MappedStatement mappedStatement = invocationContext.getMappedStatement();
-        Object parameter = invocationContext.getParameter();
-        RowBounds rowBounds = invocationContext.getRowBounds();
-        ResultHandler<?> resultHandler = invocationContext.getResultHandler();
-        BoundSql boundSql = invocationContext.getBoundSql();
-
-        Page<?> pageScope = PageContext.peek();
-        // 守卫拦截, 如果没有分页功能, 不执行分页查询动作
-        if (Objects.isNull(pageScope)) {
-            return false;
-        }
-
-        // 如果没有启动 count 查询, 直接返回
-        if (!pageScope.isCount()) {
-            pageScope.setTotal(-1);
-            return true;
-        }
-
-        // 执行 count 查询
-        MappedStatement countMs = buildAutoCountMappedStatement(mappedStatement);
-        String countSqlStr = autoCountSql(boundSql.getSql());
-        SqlHelper.SqlContext sqlContext = SqlHelper.sql(boundSql);
-        BoundSql countSql = new BoundSql(countMs.getConfiguration(), countSqlStr, sqlContext.parameterMappings(), parameter);
-        SqlHelper.applyAdditionalParams(countSql, sqlContext.additionalParameters());
-        CacheKey cacheKey = executor.createCacheKey(countMs, parameter, rowBounds, countSql);
-        List<Object> result = executor.query(countMs, parameter, rowBounds, resultHandler, cacheKey, countSql);
-
-        long total = 0L;
-        if (Objects.nonNull(result) && !result.isEmpty()) {
-            Object o = result.getFirst();
-            if (Objects.nonNull(o)) {
-                total = Long.parseLong(o.toString());
-            }
-        }
-
-        pageScope.setTotal(total);
-        return total > 0;
+    public boolean shouldIntercept(InvocationContext invocationContext) {
+        return Objects.nonNull(PageContext.peek());
     }
 
     /**
@@ -163,11 +123,44 @@ public class PaginationQueryProcessor extends QueryProcessor {
             return;
         }
 
-        // 执行分页查询
         String buildSql = boundSql.getSql();
+
+        Select parsedSelect;
+        try {
+            parsedSelect = (Select) SqlParserDelegate.parse(buildSql);
+        } catch (JSQLParserException e) {
+            throw new SQLException(e);
+        }
+
+        // 如果没有启动 count 查询, 直接返回
+        long total = -1L;
+        if (pageScope.isCount()) {
+            // 执行 count 查询
+            MappedStatement countMs = buildAutoCountMappedStatement(ms);
+            String countSqlStr = autoCountSql(parsedSelect, buildSql);
+            SqlHelper.SqlContext sqlContext = SqlHelper.sql(boundSql);
+            BoundSql countSql = new BoundSql(countMs.getConfiguration(), countSqlStr, sqlContext.parameterMappings(), parameter);
+            SqlHelper.applyAdditionalParams(countSql, sqlContext.additionalParameters());
+            CacheKey cacheKey = executor.createCacheKey(countMs, parameter, rowBounds, countSql);
+            List<Object> result = executor.query(countMs, parameter, rowBounds, resultHandler, cacheKey, countSql);
+            total = 0L;
+            if (Objects.nonNull(result) && !result.isEmpty()) {
+                Object o = result.getFirst();
+                if (Objects.nonNull(o)) {
+                    total = Long.parseLong(o.toString());
+                }
+            }
+        }
+
+        pageScope.setTotal(total);
+        if (total == 0L) {
+            return;
+        }
+
+        // 执行分页查询
         List<OrderItem> orderBy = pageScope.getOrderBy();
         if (Objects.nonNull(orderBy) && !orderBy.isEmpty()) {
-            buildSql = this.concatOrderBy(buildSql, orderBy);
+            buildSql = this.concatOrderBy(parsedSelect, orderBy);
         }
 
         Dialect dialect = DatabaseType.getDialect(ms);
@@ -198,13 +191,19 @@ public class PaginationQueryProcessor extends QueryProcessor {
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected void onResult(MappedStatement ms, Object parameter, RowBounds rowBounds, Object result) throws SQLException {
         Page<?> page = PageContext.peek();
-        if (Objects.nonNull(page) && result instanceof List list) {
-            if (!page.isEmpty()) {
-                page.clear();
-            }
-
-            page.addAll(list);
+        if (Objects.isNull(page)) {
+            return;
         }
+
+        if (!(result instanceof List list)) {
+            return;
+        }
+
+        if (!page.isEmpty()) {
+            page.clear();
+        }
+
+        page.addAll(list);
     }
 
     /**
@@ -235,13 +234,21 @@ public class PaginationQueryProcessor extends QueryProcessor {
         final String countId = String.format("%s_COUNT", ms.getId());
         final Configuration configuration = ms.getConfiguration();
         return countMsCache.computeIfAbsent(countId, key -> {
-            MappedStatement.Builder builder = new MappedStatement.Builder(configuration, key, ms.getSqlSource(), ms.getSqlCommandType());
+            ResultMap resultMap = new ResultMap.Builder(
+                configuration, COUNT_RESULT_MAP_ID,
+                Long.class, Collections.emptyList()
+            ).build();
+
+            MappedStatement.Builder builder = new MappedStatement.Builder(
+                configuration, key, ms.getSqlSource(), ms.getSqlCommandType()
+            );
+
             builder.resource(ms.getResource());
             builder.fetchSize(ms.getFetchSize());
             builder.statementType(ms.getStatementType());
             builder.timeout(ms.getTimeout());
             builder.parameterMap(ms.getParameterMap());
-            builder.resultMaps(Collections.singletonList(new ResultMap.Builder(configuration, COUNT_RESULT_MAP_ID, Long.class, Collections.emptyList()).build()));
+            builder.resultMaps(Collections.singletonList(resultMap));
             builder.resultSetType(ms.getResultSetType());
             builder.cache(ms.getCache());
             builder.flushCacheRequired(ms.isFlushCacheRequired());
@@ -253,18 +260,25 @@ public class PaginationQueryProcessor extends QueryProcessor {
     /**
      * 自动生成 count SQL，优化 order by 和参数
      *
-     * @param sql 原始 SQL
+     * @param parsedSelect 原始 SQL
+     * @param originalSql  原始 SQL
      * @return count SQL
-     * @throws SQLException SQL 异常
      */
-    public String autoCountSql(String sql) throws SQLException {
-        try {
-            Select select = (Select) SqlParserDelegate.parse(sql);
-            if (select instanceof SetOperationList) {
-                return lowLevelCountSql(sql);
-            }
+    public String autoCountSql(Select parsedSelect, String originalSql) {
+        // set operation（UNION 等）直接降级
+        if (parsedSelect instanceof SetOperationList) {
+            return lowLevelCountSql(originalSql);
+        }
 
-            PlainSelect plainSelect = (PlainSelect) select;
+        PlainSelect plainSelect = (PlainSelect) parsedSelect;
+
+        // 保存现场
+        List<OrderByElement> oldOrderBy = plainSelect.getOrderByElements();
+        List<SelectItem<?>> oldSelectItems = plainSelect.getSelectItems();
+
+        try {
+
+
             // 优化 order by 在非分组情况下
             List<OrderByElement> orderBy = plainSelect.getOrderByElements();
             if (Objects.nonNull(orderBy) && !orderBy.isEmpty()) {
@@ -287,20 +301,23 @@ public class PaginationQueryProcessor extends QueryProcessor {
             GroupByElement groupBy = plainSelect.getGroupBy();
             // 包含 distinct、groupBy 不优化
             if (Objects.nonNull(distinct) || Objects.nonNull(groupBy)) {
-                return lowLevelCountSql(select.toString());
+                return lowLevelCountSql(parsedSelect.toString());
             }
 
             for (SelectItem<?> item : plainSelect.getSelectItems()) {
                 if (item.toString().contains("?")) {
-                    return lowLevelCountSql(select.toString());
+                    return lowLevelCountSql(parsedSelect.toString());
                 }
             }
 
             // 优化 SQL
             plainSelect.setSelectItems(COUNT_SELECT_ITEM);
-            return select.toString();
-        } catch (JSQLParserException e) {
-            throw new SQLException(e);
+            return parsedSelect.toString();
+
+        } finally {
+            // 恢复现场，避免污染后续分页 SQL
+            plainSelect.setOrderByElements(oldOrderBy);
+            plainSelect.setSelectItems(oldSelectItems);
         }
     }
 
@@ -317,39 +334,29 @@ public class PaginationQueryProcessor extends QueryProcessor {
     /**
      * 合并原始 SQL 的 order by 字段
      *
-     * @param originalSql 原始 SQL
-     * @param orderBy     order by 字段字符串，逗号分隔
+     * @param parsedSelect 原始 SQL
+     * @param orderBy      order by 字段字符串，逗号分隔
      * @return 合并后的 SQL
-     * @throws SQLException SQL 异常
      */
-    public String concatOrderBy(String originalSql, List<OrderItem> orderBy) throws SQLException {
-        try {
-            Statement statement = SqlParserDelegate.parse(originalSql);
-            if (!(statement instanceof Select select)) {
-                return originalSql;
-            }
+    public String concatOrderBy(Select parsedSelect, List<OrderItem> orderBy) {
+        List<OrderByElement> additionalOrderBy = orderBy.stream().map(item -> {
+            OrderByElement element = new OrderByElement();
+            element.setExpression(new Column(item.getColumn()));
+            element.setAsc(!"DESC".equalsIgnoreCase(item.getDirection()));
+            element.setAscDescPresent(true);
+            return element;
+        }).collect(Collectors.toList());
 
-            List<OrderByElement> additionalOrderBy = orderBy.stream().map(item -> {
-                OrderByElement element = new OrderByElement();
-                element.setExpression(new Column(item.getColumn()));
-                element.setAsc(!"DESC".equalsIgnoreCase(item.getDirection()));
-                element.setAscDescPresent(true);
-                return element;
-            }).collect(Collectors.toList());
-
-            List<OrderByElement> orderByElements = select.getOrderByElements();
-            List<OrderByElement> merged;
-            if (Objects.isNull(orderByElements) || orderByElements.isEmpty()) {
-                merged = additionalOrderBy;
-            } else {
-                merged = new ArrayList<>(orderByElements);
-                merged.addAll(additionalOrderBy);
-            }
-
-            select.setOrderByElements(merged);
-            return select.toString();
-        } catch (JSQLParserException e) {
-            throw new SQLException(e);
+        List<OrderByElement> orderByElements = parsedSelect.getOrderByElements();
+        List<OrderByElement> merged;
+        if (Objects.isNull(orderByElements) || orderByElements.isEmpty()) {
+            merged = additionalOrderBy;
+        } else {
+            merged = new ArrayList<>(orderByElements);
+            merged.addAll(additionalOrderBy);
         }
+
+        parsedSelect.setOrderByElements(merged);
+        return parsedSelect.toString();
     }
 }
