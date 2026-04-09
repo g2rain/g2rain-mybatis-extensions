@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * <p>
  * 该类通过对 {@link InvocationContext} 的自动解包，将拦截逻辑拆分为两个核心阶段：
  * <ul>
- *   <li><b>前置干预</b> ({@link #onQuery})：查询执行前的扩展点；SQL 改写也可放在 {@link InterceptPoint#PREPARE} 阶段由 {@link PrepareProcessor} 处理。</li>
+ *   <li><b>前置干预</b> ({@link #onQuery})：负责 SQL 改写、物理分页参数绑定等。</li>
  *   <li><b>后置处理</b> ({@link #onResult})：负责结果回填（如 Page 对象赋值）或结果集包装。</li>
  * </ul>
  *
@@ -53,7 +53,7 @@ public abstract class QueryProcessor implements PluginProcessor {
     }
 
     /**
-     * 子类实现：查询执行前的扩展逻辑（若无需在 Executor 查询阶段改写 SQL，可实现为空方法）。
+     * 子类实现：处理查询前的 SQL 改写与参数准备。
      *
      * @param executor      MyBatis 执行器
      * @param ms            映射语句对象

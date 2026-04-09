@@ -1,6 +1,6 @@
 package com.g2rain.mybatis.extension;
 
-import com.g2rain.mybatis.extension.cache.KryoCopyCaffeineSqlStatementCache;
+import com.g2rain.mybatis.extension.cache.KryoCaffeineSqlStatementCache;
 import com.g2rain.mybatis.extension.cache.SqlStatementCache;
 import lombok.Setter;
 import net.sf.jsqlparser.JSQLParserException;
@@ -33,10 +33,10 @@ import net.sf.jsqlparser.statement.Statements;
 public class SqlParserDelegate {
 
     /**
-     * SQL 语句缓存器，默认使用 {@link KryoCopyCaffeineSqlStatementCache}。
+     * SQL 语句缓存器，默认使用 {@link KryoCaffeineSqlStatementCache}。
      */
     @Setter
-    private static SqlStatementCache sqlStatementCache = new KryoCopyCaffeineSqlStatementCache();
+    private static SqlStatementCache sqlStatementCache = new KryoCaffeineSqlStatementCache();
 
     /**
      * 单条 SQL 解析函数，默认使用 {@link CCJSqlParserUtil#parse(String)}。

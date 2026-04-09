@@ -30,6 +30,16 @@ import java.util.function.Consumer;
 public class DialectModel {
 
     /**
+     * 默认第一个分页参数名称
+     */
+    private static final String FIRST_PARAM_NAME = "__p_param_1__";
+
+    /**
+     * 默认第二个分页参数名称
+     */
+    private static final String SECOND_PARAM_NAME = "__p_param_2__";
+
+    /**
      * 分页后的 SQL
      */
     @Getter
@@ -117,11 +127,11 @@ public class DialectModel {
      */
     public DialectModel setConsumer(boolean isFirstParam) {
         if (isFirstParam) {
-            this.firstParamConsumer = i -> i.add(new ParameterMapping.Builder(configuration, PaginationConstants.FIRST_PARAM_NAME, long.class).build());
-            this.firstParamMapConsumer = i -> i.put(PaginationConstants.FIRST_PARAM_NAME, firstParam);
+            this.firstParamConsumer = i -> i.add(new ParameterMapping.Builder(configuration, FIRST_PARAM_NAME, long.class).build());
+            this.firstParamMapConsumer = i -> i.put(FIRST_PARAM_NAME, firstParam);
         } else {
-            this.secondParamConsumer = i -> i.add(new ParameterMapping.Builder(configuration, PaginationConstants.SECOND_PARAM_NAME, long.class).build());
-            this.secondParamMapConsumer = i -> i.put(PaginationConstants.SECOND_PARAM_NAME, secondParam);
+            this.secondParamConsumer = i -> i.add(new ParameterMapping.Builder(configuration, SECOND_PARAM_NAME, long.class).build());
+            this.secondParamMapConsumer = i -> i.put(SECOND_PARAM_NAME, secondParam);
         }
 
         return this;
