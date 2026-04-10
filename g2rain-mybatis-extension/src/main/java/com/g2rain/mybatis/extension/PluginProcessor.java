@@ -3,7 +3,7 @@ package com.g2rain.mybatis.extension;
 import java.sql.SQLException;
 
 /**
- * 插件处理器接口，用于在 {@link ExecutorCompositeInterceptor}、{@link StatementHandlerCompositeInterceptor} 中按序扩展 MyBatis 执行逻辑。
+ * 插件处理器接口，用于在 {@link ExecutorCompositeInterceptor} 中按序扩展 MyBatis 执行逻辑。
  * <p>
  * 该接口定义了一个完整的插件生命周期：
  * <ol>
@@ -46,8 +46,8 @@ public interface PluginProcessor {
     /**
      * 前置处理回调（SQL 执行前）。
      * <p>
-     * 触发时机：在 MyBatis 构建出 BoundSql 后，真实 SQL 执行前（具体与 {@link InterceptPoint} 及实现类有关）。
-     * 主要职责：参数校验、SQL 改写或参数绑定等（例如分页可在 QUERY 阶段做 count，在 PREPARE 阶段改写分页 SQL）。
+     * 触发时机：在 MyBatis 构建出 BoundSql 后，真实 SQL 执行前。
+     * 主要职责：执行参数校验、自动 Count 查询、物理分页 SQL 改写及动态参数绑定。
      * 约束：在此处对 BoundSql 或入参的修改将直接作用于后续的数据库交互。
      *
      * @param context 当前调用上下文，包含 Executor、MappedStatement、BoundSql 等核心对象

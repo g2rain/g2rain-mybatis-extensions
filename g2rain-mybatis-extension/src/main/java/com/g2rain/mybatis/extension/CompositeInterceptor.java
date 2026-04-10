@@ -30,7 +30,7 @@ public abstract class CompositeInterceptor implements Interceptor {
     private final List<PluginProcessor> pluginProcessors = new ArrayList<>();
 
     /**
-     * 复合拦截器链执行入口。
+     * 拦截 Executor 方法的拦截器链。
      * <p>
      * 创建 {@link InvocationContext}，识别拦截点类型，
      * 并依次执行匹配的插件处理器，最后调用对应 {@link InterceptPoint#handle(InvocationContext)}。
@@ -50,22 +50,22 @@ public abstract class CompositeInterceptor implements Interceptor {
                 continue;
             }
 
-            if (processor.shouldIntercept(context)) {
-                activeProcessors.add(processor);
-            }
+            activeProcessors.add(processor);
         }
         try {
             // 2. 执行前置增强逻辑
             for (PluginProcessor processor : activeProcessors) {
-                processor.preHandle(context);
+                if (processor.shouldIntercept(context)) {
+                    processor.preHandle(context);
+                }
             }
 
             // 3. 执行 MyBatis 核心业务逻辑
             Object result = point.handle(context);
 
             // 4. 执行后置结果处理逻辑
-            for (PluginProcessor processor : activeProcessors) {
-                processor.postHandle(context, result);
+            for (int i = activeProcessors.size() - 1; i >= 0; i--) {
+                activeProcessors.get(i).postHandle(context, result);
             }
 
             return result;
