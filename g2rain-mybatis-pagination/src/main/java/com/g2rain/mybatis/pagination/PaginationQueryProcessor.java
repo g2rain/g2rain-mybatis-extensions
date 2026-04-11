@@ -277,8 +277,6 @@ public class PaginationQueryProcessor extends QueryProcessor {
         List<SelectItem<?>> oldSelectItems = plainSelect.getSelectItems();
 
         try {
-
-
             // 优化 order by 在非分组情况下
             List<OrderByElement> orderBy = plainSelect.getOrderByElements();
             if (Objects.nonNull(orderBy) && !orderBy.isEmpty()) {
