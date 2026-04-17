@@ -6,6 +6,7 @@ import com.g2rain.mybatis.extension.SqlHelper;
 import com.g2rain.mybatis.extension.SqlParserDelegate;
 import com.g2rain.mybatis.pagination.model.OrderItem;
 import com.g2rain.mybatis.pagination.model.Page;
+import com.g2rain.mybatis.pagination.model.PagingEscape;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
@@ -101,6 +102,16 @@ public class PaginationQueryProcessor extends QueryProcessor {
      */
     @Override
     public boolean shouldIntercept(InvocationContext invocationContext) {
+        /*
+         * 优先检查逃逸信号：
+         * 若当前处于 PagingEscape.run() 作用域内，说明是框架内部调用或用户指定的忽略区域，
+         * 此时必须无条件跳过分页逻辑，以防止分页上下文污染（如权限校验 SQL 抢占分页参数）。
+         */
+        if (PagingEscape.isEscaped()) {
+            return false;
+        }
+
+        // 检查分页上下文：只有当 PageContext 中绑定了有效的分页参数时，才触发分页改写
         return Objects.nonNull(PageContext.peek());
     }
 
@@ -185,11 +196,20 @@ public class PaginationQueryProcessor extends QueryProcessor {
      * @param parameter 参数
      * @param rowBounds 行边界
      * @param result    查询结果
-     * @throws SQLException SQL 异常
      */
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    protected void onResult(MappedStatement ms, Object parameter, RowBounds rowBounds, Object result) throws SQLException {
+    protected void onResult(MappedStatement ms, Object parameter, RowBounds rowBounds, Object result) {
+        /*
+         * 优先检查逃逸信号：
+         * 若当前处于 PagingEscape.run() 作用域内，说明是框架内部调用或用户指定的忽略区域，
+         * 此时必须无条件跳过分页逻辑，以防止分页上下文污染（如权限校验 SQL 抢占分页参数）。
+         */
+        if (PagingEscape.isEscaped()) {
+            return;
+        }
+
+        // 收集分页结果
         Page<?> page = PageContext.peek();
         if (Objects.isNull(page)) {
             return;
@@ -211,6 +231,16 @@ public class PaginationQueryProcessor extends QueryProcessor {
      */
     @Override
     public void afterCompletion() {
+        /*
+         * 优先检查逃逸信号：
+         * 若当前处于 PagingEscape.run() 作用域内，说明是框架内部调用或用户指定的忽略区域，
+         * 此时必须无条件跳过分页逻辑，以防止分页上下文污染（如权限校验 SQL 抢占分页参数）。
+         */
+        if (PagingEscape.isEscaped()) {
+            return;
+        }
+
+        // 清空分页信息, 防止分页参数污染
         PageContext.clear();
     }
 
