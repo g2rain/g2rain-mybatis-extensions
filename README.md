@@ -1,272 +1,186 @@
+﻿<p align="center">
+  <img src="https://github.com/g2rain.png" alt="G2Rain" width="180" />
+</p>
+
 # g2rain-mybatis-extensions
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.g2rain/g2rain-mybatis-extension.svg)](https://search.maven.org/artifact/com.g2rain/g2rain-mybatis-extension)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Java Version](https://img.shields.io/badge/Java-25+-orange.svg)](https://openjdk.java.net/)
-[![Build Status](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://github.com/g2rain/g2rain-mybatis-extensions)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-25-437291?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
-## 1. 徽标与状态标识
-- 当前版本通过 `Maven Central` 发布
-- 当前运行时要求 `Java 25+`
-- 当前构建方式以 `Maven` 为准
-- 当前开源许可证为 `Apache 2.0`
+下一代AI软件开发范式，AI原生Agent平台，开源的企业级SaaS底座。
 
-## 2. 项目简介
-`g2rain-mybatis-extensions` 是 G2rain 平台围绕 MyBatis 执行链扩展沉淀的基础仓库，用于统一提供复合拦截器模型、插件处理器机制、分页上下文、SQL 解析与改写、数据库方言分页以及 Spring Boot 自动接入能力。它解决的不是单一分页工具问题，而是为后续数据隔离、权限 SQL 增强等能力提供可复用的底层扩展骨架。
+g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力
 
-## 3. 平台定位
+[官网](https://www.g2rain.com) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
-`g2rain-mybatis-extensions` 位于 G2rain 平台公共基础能力层，是平台数据访问工程化能力的一部分。  
-它主要服务于需要统一分页能力、统一 MyBatis 拦截链能力的 Java 后端项目。  
-它不承载具体业务接口，而是作为底层执行链引擎，为更上层 Starter、权限扩展与业务服务提供支撑。
+## 目录
 
-## 4. 核心能力
+- 项目简介
+- 平台定位
+- 业务域说明
+- 功能概览
+- 使用场景
+- 核心流程
+- 流程图
+- 技术栈
+- 环境要求
+- 快速开始
+- 构建与镜像
+- 代码质量与测试
+- 使用示例
+- 安全说明
+- 与关联仓库的关系
+- 模块说明
+- 职责边界
+- 常见问题
+- 参与贡献
+- 许可证
+- 联系我们
+- 致谢
 
-- 复合拦截器与插件处理器模型：统一抽象 MyBatis `QUERY`、`UPDATE`、`PREPARE` 执行链
-- 分页上下文管理：通过 `PageContext + ScopedValue` 在回调作用域内管理分页状态
-- Count SQL 优化：基于 `JSqlParser` 自动优化或降级生成 count 查询
-- 数据库方言分页：按数据库类型生成 MySQL、PostgreSQL 等分页 SQL
-- 安全排序处理：对 `orderBy` 进行过滤，降低排序注入风险
-- Spring Boot 自动接入：通过 Starter 自动注册分页处理器与复合拦截器
+## 项目简介
 
-## 5. 技术栈
+g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力
 
-- 语言与运行时：`Java 25`
-- 构建工具：`Maven`
-- 打包方式：根工程 `pom`，子模块 `jar`
-- 核心依赖：`MyBatis`、`JSqlParser`、`Caffeine`、`Kryo`
-- Starter 依赖：`Spring Boot 4.0.5`、`mybatis-spring-boot-starter 4.0.1`
-- 质量工具：`Checkstyle`、`PMD`、`SpotBugs`、`JaCoCo`
-- 发布目标：`Maven Central / Sonatype Central Portal`
+## 平台定位
 
-## 6. 快速开始
-### 环境要求
+该仓库位于 g2rain 后端研发支撑层，为多个后端项目提供集成能力、工程化工具或共享扩展。
 
-- `JDK 25`
-- `Maven 3.9+`
+## 业务域说明
 
-### Maven 依赖
+该仓库聚焦于 `MyBatis 数据访问扩展、查询增强与持久化公共能力`。
 
-#### 方式一：直接引入分页 Starter
+## 功能概览
 
-```xml
-<dependency>
-    <groupId>com.g2rain</groupId>
-    <artifactId>g2rain-starter-mybatis-pagination</artifactId>
-    <version>1.0.4</version>
-</dependency>
+| 能力 | 说明 |
+| --- | --- |
+| 数据访问增强 | 围绕 MyBatis/MyBatis-Plus 扩展查询、映射、条件构造或持久化辅助能力。 |
+| 统一持久化约定 | 帮助平台后端服务复用一致的数据访问模式，减少重复封装。 |
+
+## 使用场景
+
+| 场景 | 说明 |
+| --- | --- |
+| 增强数据访问表达 | 当服务需要更统一或更可扩展的 MyBatis 查询、映射、分页或条件封装时使用。 |
+| 复用持久化基础能力 | 当多个后端服务需要共享一致的数据访问辅助能力时，将扩展组件作为基础依赖引入。 |
+
+## 核心流程
+
+| 流程 | 关键步骤 | 代码线索 |
+| --- | --- | --- |
+| 数据访问扩展流程 | 业务服务引入扩展依赖 → Mapper 或查询组件调用扩展 API → 扩展层构造查询/映射/分页规则 → MyBatis 执行 SQL 并返回统一结果 | pom.xml、MyBatis dependencies、extension classes |
+
+## 流程图
+
+```mermaid
+flowchart TD
+  A[业务服务调用 Mapper/扩展 API] --> B[扩展组件构造查询条件]
+  B --> C[MyBatis 执行 SQL]
+  C --> D[映射并返回结果]
+  D --> E[业务服务复用统一数据访问能力]
 ```
 
-#### 方式二：按需引入底层模块
+## 技术栈
 
-```xml
-<dependency>
-    <groupId>com.g2rain</groupId>
-    <artifactId>g2rain-mybatis-extension</artifactId>
-    <version>1.0.4</version>
-</dependency>
+| 类别 | 说明 |
+| --- | --- |
+| 运行时 | Java 25 |
+| 其他 | Lombok |
 
-<dependency>
-    <groupId>com.g2rain</groupId>
-    <artifactId>g2rain-mybatis-pagination</artifactId>
-    <version>1.0.4</version>
-</dependency>
-```
+## 环境要求
 
-### Starter 配置
+- JDK 25+
+- Maven 3.9+
 
-```yaml
-g2rain:
-  mybatis:
-    pagination:
-      order: 20000
-```
+## 快速开始
 
-### 基本使用
+| 步骤 | 命令或位置 | 说明 |
+| --- | --- | --- |
+| 准备构建环境 | JDK 25+、Maven 3.9+ | 工具组件通常只需要 Java 与 Maven 构建环境。 |
+| 构建组件 | `mvn clean package` | 执行 Maven 构建，生成可发布或可本地安装的组件产物。 |
+| 本地安装 | `mvn clean install` | 安装到本地 Maven 仓库，便于业务工程试用依赖。 |
 
-```java
-Page<User> page = PageContext.of(1, 10, "id desc", () -> {
-    userMapper.selectList(query);
-});
+版本号以项目构建配置为准，当前识别为 `1.0.4`。
 
-long total = page.getTotal();
-int pages = page.getPages();
-List<User> records = page.getResult();
-```
+## 构建与镜像
 
-### 非 Starter 场景手动接入
+| 目标 | 命令 | 产物 | 说明 |
+| --- | --- | --- | --- |
+| 组件产物 | `mvn clean package` | `g2rain-mybatis-extensions-1.0.4.jar` | 执行 Maven 标准构建，生成可发布的公共库组件产物。 |
+| 本地 Maven 安装 | `mvn clean install` | `本地 Maven 仓库产物` | 安装到本地 Maven 仓库，便于业务工程本地验证依赖。 |
 
-```java
-Configuration configuration = sqlSessionFactory.getConfiguration();
+## 代码质量与测试
 
-ExecutorCompositeInterceptor interceptor = new ExecutorCompositeInterceptor();
-interceptor.addPluginProcessor(new PaginationQueryProcessor(20000));
+| 检查项 | 命令 | 说明 |
+| --- | --- | --- |
+| Maven Enforcer | `mvn validate` | 约束 JDK 版本、Maven 版本与依赖规则。 |
 
-configuration.addInterceptor(interceptor);
-```
+## 使用示例
 
-### 本地构建
+| 示例 | 方式 | 内容 | 说明 |
+| --- | --- | --- | --- |
+| Maven 依赖引入 | Maven | `<dependency><groupId>com.g2rain</groupId><artifactId>g2rain-mybatis-extensions</artifactId><version>1.0.4</version></dependency>` | 在业务工程 pom.xml 中引入该组件。 |
 
-```bash
-mvn clean install
-```
+## 安全说明
 
-### 本地测试
+| 主题 | 说明 |
+| --- | --- |
+| 依赖可信边界 | 作为平台共享组件或构建工具，应通过组织 Maven 仓库、版本锁定和发布流程控制依赖来源。 |
+| SQL 与查询边界 | 数据访问扩展应避免拼接不可信输入，业务服务需要保持参数化查询和权限过滤。 |
 
-```bash
-mvn test
-```
+## 与关联仓库的关系
 
-### 发布说明
+本仓库位于 g2rain 后端研发支撑层，通过 Maven 依赖为平台后端服务提供 MyBatis 数据访问扩展能力。
 
-- 正式版通过 Git Tag 触发 `release.yml`
-- `develop` 分支上的 `-SNAPSHOT` 版本可通过 `snapshot.yml` 发布
-- Release 流程包含源码包、Javadoc 包和 GPG 签名
+## 模块说明
 
-## 7. 项目结构
+| 模块 | 职责说明 | 代码线索 |
+| --- | --- | --- |
+| MyBatis 扩展 API | 提供查询、映射、分页或条件构造等数据访问增强能力。 | mybatis、mapper、extension classes |
+| 持久化公共约定 | 沉淀平台后端服务复用的数据访问模式。 | entity/model、mapper support、condition/query classes |
 
-```text
-g2rain-mybatis-extensions/
-├── g2rain-mybatis-extension/
-├── g2rain-mybatis-pagination/
-├── g2rain-starter-mybatis-pagination/
-├── .github/workflows/
-│   ├── release.yml
-│   └── snapshot.yml
-└── pom.xml
-```
+## 职责边界
 
-### 核心能力结构说明
+该仓库主要负责：
+- 负责提供 MyBatis 数据访问扩展、查询辅助和持久化公共能力
+- 负责沉淀平台后端服务可复用的数据访问约定
 
-#### 1. `g2rain-mybatis-extension`：MyBatis 扩展底层引擎
-- 解决问题：避免把分页、数据隔离、审计等增强逻辑散落在多个独立拦截器中，难以统一排序和清理
-- 核心逻辑：
-  - `CompositeInterceptor` 统一组织 `preHandle -> MyBatis 执行 -> postHandle -> afterCompletion`
-  - `PluginProcessor` 用于抽象不同拦截点的扩展处理器
-  - `InvocationContext` 统一封装 `MappedStatement`、`BoundSql`、`RowBounds`、`ResultHandler`
-- 典型接入方式：扩展新的查询/更新/prepare 增强时，优先实现 `PluginProcessor` 子类，而不是再新增一套零散拦截器
+该仓库默认不负责：
+- 不负责具体业务表结构设计和业务数据治理
+- 不绕过业务服务自身的权限校验和数据边界
 
-典型写法：
-```java
-public class CustomQueryProcessor extends QueryProcessor {
-    @Override
-    protected void onQuery(Executor executor, MappedStatement ms, Object parameter,
-                           RowBounds rowBounds, ResultHandler<?> resultHandler, BoundSql boundSql) {
-        // 在这里改写 SQL 或补充参数
-    }
+## 常见问题
 
-    @Override
-    public int order() {
-        return 30000;
-    }
-}
-```
+| 问题 | 可能原因 | 处理建议 |
+| --- | --- | --- |
+| 业务工程无法解析依赖 | 组件未发布到当前 Maven 仓库，或 groupId/artifactId/version 配置不一致。 | 检查 Maven 仓库地址、版本号和业务工程 dependencyManagement 配置。 |
+| 查询结果或 SQL 不符合预期 | 扩展 API 使用方式、实体映射、Mapper 配置或分页条件不匹配。 | 检查 Mapper、实体字段、MyBatis 配置和生成 SQL。 |
 
-#### 2. `g2rain-mybatis-extension.cache`：SQL 解析缓存与深拷贝支持
-- 解决问题：复杂 SQL 经常重复解析，直接复用解析结果又可能产生共享对象污染
-- 核心逻辑：
-  - 通过 `Caffeine` 缓存语句解析结果
-  - 通过 `Kryo` 做深拷贝，降低复用解析树时的副作用
-- 典型使用场景：后续如果新增更复杂的 SQL 改写能力，可以沿用这套缓存思路，而不是每次都重新解析
+## 参与贡献
 
-#### 3. `g2rain-mybatis-pagination`：分页上下文、Count 优化与方言分页
-- 解决问题：让业务查询无需手写 `limit/offset` 和 count SQL，同时保持分页参数在一次查询作用域内安全可控
-- 核心逻辑：
-  - `PageContext.of(...)` 通过 `ScopedValue` 绑定当前分页对象
-  - `PaginationQueryProcessor` 仅在存在 `PageContext` 时才触发
-  - 对简单 SQL 直接优化为 `COUNT(*)`，对 `distinct`、`group by`、`union` 等复杂 SQL 自动降级为子查询 count
-  - 合并排序字段时进行安全过滤，最终由 `Dialect` 生成数据库方言分页 SQL
-- 典型用法：把 Mapper 查询包裹在 `PageContext.of(...)` 内，不改动原 Mapper 签名
+我们欢迎所有形式的贡献：Issue 反馈、文档改进、功能建议与代码提交。
 
-典型写法：
-```java
-Page<Order> page = PageContext.of(1, 20, false, List.of(
-    new OrderItem("create_time", "desc")
-), () -> {
-    orderMapper.selectList(query);
-});
-```
+推荐流程：
 
-#### 4. `g2rain-starter-mybatis-pagination`：Spring Boot 自动装配入口
-- 解决问题：减少业务服务手动注册拦截器和处理器的样板代码
-- 核心逻辑：
-  - `PaginationAutoConfiguration` 在存在 `SqlSessionFactory` 时自动生效
-  - 自动注册 `PaginationQueryProcessor`
-  - 自动注册 `paginationExecutorCompositeInterceptor`
-  - 通过 `PaginationProperties` 暴露插件顺序配置
-- 典型接入方式：Spring Boot + MyBatis 项目优先使用这个 Starter，而不是手动 wiring
+1. Fork 本仓库。
+2. 创建特性分支：`git checkout -b feature/your-feature-name`。
+3. 提交更改：`git commit -m "Add some feature"`。
+4. 推送分支：`git push origin feature/your-feature-name`。
+5. 提交 Pull Request。
 
-典型写法：
-```yaml
-g2rain:
-  mybatis:
-    pagination:
-      order: 20000
-```
+代码贡献前请尽量补充必要的测试和文档，并确保构建、测试与静态检查通过。
 
-### 接入建议与边界
-- 如果目标是统一分页接入，优先引入 `g2rain-starter-mybatis-pagination`
-- 如果目标是扩展更复杂的数据隔离或权限 SQL 改写，建议基于 `PluginProcessor` 机制继续扩展
-- 本仓库负责底层扩展引擎，不直接替代更上层的完整平台数据权限方案
+## 许可证
 
-## 8. 常用命令
+本项目基于 [Apache 2.0许可证](https://github.com/g2rain/g2rain-common/blob/main/LICENSE) 开源。
 
-```bash
-mvn compile
-mvn test
-mvn checkstyle:check pmd:check spotbugs:check
-mvn jacoco:report
-mvn package
-```
+## 联系我们
 
-## 9. 质量与测试
-- 当前扫描到主源码文件 `29` 个，测试文件 `1` 个
-- 当前回归测试集中在 `PaginationQueryProcessorIdempotentTest`
-- 已启用 `maven-enforcer-plugin`、`maven-checkstyle-plugin`、`maven-pmd-plugin`、`spotbugs-maven-plugin` 和 `jacoco-maven-plugin`
-- 当前仍建议后续继续补充复杂 SQL、不同方言和 `PagingEscape` 相关测试
+- Issues: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
+- 讨论: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
+- 邮箱: g2rain_developer@163.com
 
-## 10. 相关仓库
+## 致谢
 
-- `g2rain-common`
-- `g2rain-spring-boot-starter`
-- `g2rain-iam`
-- `g2rain-department`
-- `g2rain-infra`
-
-## 11. 使用建议
-
-- 适合作为平台内 MyBatis 扩展能力的统一底座
-- Spring Boot 场景建议优先通过 Starter 接入
-- 扩展新的 SQL 改写能力时，优先复用复合拦截器与插件处理器模型
-- 不建议把该仓库简单理解为“分页工具库”
-
-## 12. 贡献指南
-
-欢迎通过文档改进、Issue 反馈、测试补充、代码优化、功能增强等形式参与贡献。  
-建议流程：
-1. Fork 本仓库
-2. 创建特性分支
-3. 提交修改
-4. 推送分支
-5. 提交 Pull Request
-
-提交前请尽量确保：
-- 遵循现有技术栈与代码规范
-- 更新相关文档
-- 补充必要测试
-
-## 13. 许可证
-
-本项目基于 [Apache 2.0许可证](LICENSE) 开源。
-
-## 14. 联系我们
-
-- **站点**: https://www.g2rain.com/
-- **Issues**: [GitHub Issues](https://github.com/g2rain/g2rain/issues)
-- **讨论**: [GitHub Discussions](https://github.com/g2rain/g2rain/discussions)
-- **邮箱**: g2rain_developer@163.com
-
-## 15. 致谢
-
-感谢所有为这个项目做出贡献的开发者们。  
-如果这个项目对您有帮助，欢迎 Star 支持。
+感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
