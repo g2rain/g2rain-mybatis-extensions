@@ -21,7 +21,6 @@
     </description>
 
     <properties>
-        <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

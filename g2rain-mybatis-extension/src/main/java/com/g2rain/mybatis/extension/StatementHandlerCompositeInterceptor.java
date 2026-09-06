@@ -11,7 +11,7 @@ import java.sql.Connection;
 /**
  * {@link StatementHandler} 复合拦截器，基于 {@link PluginProcessor} 插件链扩展 MyBatis 执行逻辑。
  * <p>
- * 该拦截器接管 {@link StatementHandler#prepare} 阶段（各类 SQL 语句准备）
+ * 该拦截器接管 {@link StatementHandler} 的查询与更新操作
  *
  * @author alpha
  * @since 2026/3/3
@@ -21,7 +21,7 @@ import java.sql.Connection;
 })
 public class StatementHandlerCompositeInterceptor extends CompositeInterceptor {
     /**
-     * 拦截 StatementHandler 方法。
+     * 拦截 Executor 方法。
      * <p>
      * 创建 {@link InvocationContext}，识别拦截点类型，
      * 并依次执行匹配的插件处理器，最后调用对应 {@link InterceptPoint#handle(InvocationContext)}。
