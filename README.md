@@ -10,7 +10,7 @@
 
 下一代AI软件开发范式，AI原生Agent平台，开源的企业级SaaS底座。
 
-g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力
+g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力；作为平台后端研发支撑层被多个 g2rain 服务复用
 
 [官网](https://www.g2rain.com) · [Issues](https://github.com/g2rain/g2rain/issues) · [Discussions](https://github.com/g2rain/g2rain/discussions)
 
@@ -34,6 +34,7 @@ g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条�
 - 模块说明
 - 职责边界
 - 常见问题
+- 关联仓库
 - 参与贡献
 - 许可证
 - 联系我们
@@ -41,7 +42,7 @@ g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条�
 
 ## 项目简介
 
-g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力
+g2rain MyBatis 扩展组件，面向数据访问层提供查询、映射、条件构造或持久化增强能力；作为平台后端研发支撑层被多个 g2rain 服务复用
 
 ## 平台定位
 
@@ -101,13 +102,13 @@ flowchart TD
 | 构建组件 | `mvn clean package` | 执行 Maven 构建，生成可发布或可本地安装的组件产物。 |
 | 本地安装 | `mvn clean install` | 安装到本地 Maven 仓库，便于业务工程试用依赖。 |
 
-版本号以项目构建配置为准，当前识别为 `1.0.4`。
+版本号以项目构建配置为准，当前识别为 `1.0.2`。
 
 ## 构建与镜像
 
 | 目标 | 命令 | 产物 | 说明 |
 | --- | --- | --- | --- |
-| 组件产物 | `mvn clean package` | `g2rain-mybatis-extensions-1.0.4.jar` | 执行 Maven 标准构建，生成可发布的公共库组件产物。 |
+| 组件产物 | `mvn clean package` | `g2rain-mybatis-extensions-1.0.2.jar` | 执行 Maven 标准构建，生成可发布的公共库组件产物。 |
 | 本地 Maven 安装 | `mvn clean install` | `本地 Maven 仓库产物` | 安装到本地 Maven 仓库，便于业务工程本地验证依赖。 |
 
 ## 代码质量与测试
@@ -120,7 +121,7 @@ flowchart TD
 
 | 示例 | 方式 | 内容 | 说明 |
 | --- | --- | --- | --- |
-| Maven 依赖引入 | Maven | `<dependency><groupId>com.g2rain</groupId><artifactId>g2rain-mybatis-extensions</artifactId><version>1.0.4</version></dependency>` | 在业务工程 pom.xml 中引入该组件。 |
+| Maven 依赖引入 | Maven | `<dependency><groupId>com.g2rain</groupId><artifactId>g2rain-mybatis-extensions</artifactId><version>1.0.2</version></dependency>` | 在业务工程 pom.xml 中引入该组件。 |
 
 ## 安全说明
 
@@ -157,6 +158,12 @@ flowchart TD
 | 业务工程无法解析依赖 | 组件未发布到当前 Maven 仓库，或 groupId/artifactId/version 配置不一致。 | 检查 Maven 仓库地址、版本号和业务工程 dependencyManagement 配置。 |
 | 查询结果或 SQL 不符合预期 | 扩展 API 使用方式、实体映射、Mapper 配置或分页条件不匹配。 | 检查 Mapper、实体字段、MyBatis 配置和生成 SQL。 |
 
+## 关联仓库
+
+| 仓库 | 协作关系 |
+| --- | --- |
+| g2rain-common | 复用平台公共规范、通用模型、工具能力或基础依赖约束。 |
+
 ## 参与贡献
 
 我们欢迎所有形式的贡献：Issue 反馈、文档改进、功能建议与代码提交。
@@ -184,3 +191,4 @@ flowchart TD
 ## 致谢
 
 感谢所有为 g2rain 项目提交 Issue、代码、文档、建议和使用反馈的开发者们！
+
