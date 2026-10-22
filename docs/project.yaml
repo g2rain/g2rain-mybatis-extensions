@@ -1,0 +1,45 @@
+schemaVersion: 1
+project:
+  name: g2rain-mybatis-extensions
+  family: backend-integration-tool
+  implementationType: mybatis-extension-suite
+  description: G2rain MyBatis 可组合扩展、SQL 解析缓存、分页组件与 Spring Boot 分页 Starter。
+  repositoryPath: D:\\github\\g2rain-mybatis-extensions
+  build:
+    system: maven
+    javaRelease: 25
+    versionProperty: revision
+    version: 1.0.4
+  baseline:
+    name: mybatis-extension-suite
+    version: 1.0.0-local
+    status: local
+    centralProfileAvailable: false
+    centralCatalogStatus: not-registered
+  modules:
+    - name: g2rain-mybatis-extension
+      role: 可组合 MyBatis 插件处理器与 SQL 解析缓存基础层
+    - name: g2rain-mybatis-pagination
+      role: 分页上下文、SQL 改写、计数查询及 MySQL/PostgreSQL 方言
+    - name: g2rain-starter-mybatis-pagination
+      role: Spring Boot 分页自动配置
+  dependencies:
+    mybatis: 3.5.19
+    jsqlparser: 4.7
+    caffeine: 3.2.3
+    kryo: 5.6.2
+    springBoot: 4.0.3
+    mybatisSpringBootStarter: 4.0.1
+  validation:
+    command: mvn test
+    status: passed
+    observedAt: 2026-09-06
+    reactorModules: 4
+    testsRun: 2
+    failures: 0
+    errors: 0
+    coverage: not-produced
+  knownDifferences:
+    - 当前未提交 README.md 将版本写为 1.0.2，而 pom.xml 与验证构建均为 1.0.4。
+    - 当前仅分页 Starter 的一个测试类参与构建，共执行 2 个测试。
+    - JaCoCo 未产生执行数据，构建日志显示报告阶段被跳过。
