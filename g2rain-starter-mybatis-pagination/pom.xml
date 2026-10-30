@@ -20,17 +20,8 @@
     </description>
 
     <properties>
-        <spring.boot.version>4.1.1</spring.boot.version>
+        <spring.boot.version>4.1.2</spring.boot.version>
         <mybatis.spring.boot.version>4.1.0</mybatis.spring.boot.version>
-        <!--
-            Boot 4.1.1 默认版本低于安全线；本模块只 import BOM，属性覆盖不生效，下方 dependencyManagement 显式钉版。
-            - logback：安全修复（classic/core）
-            - slf4j：与 logback 无关；抬 logback 后其声明的 slf4j 上界更高，需同步钉 api/jul-to-slf4j
-            - asm：安全修复（asm-bom）
-        -->
-        <logback.version>1.6.5</logback.version>
-        <slf4j.version>2.0.20</slf4j.version>
-        <asm.version>9.11.1</asm.version>
         <mockito.core.version>5.24.0</mockito.core.version>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -46,31 +37,9 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.ow2.asm</groupId>
-                <artifactId>asm-bom</artifactId>
-                <version>${asm.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jul-to-slf4j</artifactId>
-                <version>${slf4j.version}</version>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.spring.boot.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -93,7 +62,6 @@
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>${mybatis.spring.boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
